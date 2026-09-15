@@ -1,0 +1,271 @@
+@model EmpLMS.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/Admin/Dashboard">
+                <i class="fa-solid fa-layer-group me-2"></i> ELMS Admin
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="https://ui-avatars.com/api/?name=@(User.Identity?.Name ?? "Admin")&background=4361ee&color=fff" alt="Profile" class="rounded-circle me-2" width="35" height="35">
+                            <span class="fw-600">@(User.Identity?.Name ?? "Admin User")</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-card border-0 mt-2">
+                            <li><a class="dropdown-item text-danger" href="/Account/Logout"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar d-none d-lg-block">
+            <h6 class="text-uppercase text-muted fw-bold mb-3 px-3 text-xs">Menu</h6>
+            <a href="/Admin/Dashboard" class="sidebar-link active">
+                <i class="fa-solid fa-border-all"></i> Dashboard
+            </a>
+            <a href="/Admin/Employees" class="sidebar-link">
+                <i class="fa-solid fa-users"></i> Employees
+            </a>
+            <a href="/Admin/Leaves" class="sidebar-link">
+                <i class="fa-solid fa-calendar-check"></i> Leave Requests
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Dashboard Overview</h2>
+                    <p class="text-muted mb-0">Welcome back, here's what's happening across the organization.</p>
+                </div>
+                <a href="/Admin/Leaves" class="btn btn-custom"><i class="fa-solid fa-clipboard-check me-2"></i> Review All Leaves</a>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                    <i class="fa-solid fa-circle-info me-2"></i> @TempData["WarningMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Stats Row -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-6 col-lg-3">
+                    <div class="glass-card stat-card">
+                        <div class="stat-details">
+                            <p>Total Active Employees</p>
+                            <h3>@Model.Stats.TotalEmployees</h3>
+                        </div>
+                        <div class="stat-icon primary">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="glass-card stat-card">
+                        <div class="stat-details">
+                            <p>Pending Requests</p>
+                            <h3>@Model.Stats.PendingRequests</h3>
+                        </div>
+                        <div class="stat-icon warning">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="glass-card stat-card">
+                        <div class="stat-details">
+                            <p>Approved Requests</p>
+                            <h3>@Model.Stats.ApprovedRequests</h3>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="glass-card stat-card">
+                        <div class="stat-details">
+                            <p>Rejected Requests</p>
+                            <h3>@Model.Stats.RejectedRequests</h3>
+                        </div>
+                        <div class="stat-icon danger">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Requests Table -->
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0">Recent Leave Requests</h5>
+                    <a href="/Admin/Leaves" class="btn btn-sm btn-outline-custom">View All</a>
+                </div>
+                
+                <div id="ajaxAlertContainer"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-glass mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Duration</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Quick Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.RecentLeaves.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">No leave requests found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.RecentLeaves)
+                                {
+                                    <tr id="leaveRow-@item.Id">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(item.EmployeeName)&background=random" class="rounded-circle me-3" width="40">
+                                                <div>
+                                                    <h6 class="mb-0 fw-600">@item.EmployeeName</h6>
+                                                    <small class="text-muted">@item.EmployeeCode</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@item.DepartmentName</td>
+                                        <td>
+                                            <span class="d-block fw-600">@item.FromDate.ToString("MMM dd") - @item.ToDate.ToString("MMM dd")</span>
+                                            <small class="text-muted">@item.TotalDays Day(s)</small>
+                                        </td>
+                                        <td>
+                                            <span class="d-block fw-600 text-primary-custom">@item.LeavePurposeName</span>
+                                            <small class="text-muted">@item.Remarks</small>
+                                        </td>
+                                        <td id="statusCell-@item.Id">
+                                            @if (item.Status == "Approved")
+                                            {
+                                                <span class="badge badge-approved">Approved</span>
+                                            }
+                                            else if (item.Status == "Rejected")
+                                            {
+                                                <span class="badge bg-danger">Rejected</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-pending">Pending</span>
+                                            }
+                                        </td>
+                                        <td id="actionCell-@item.Id">
+                                            @if (item.Status == "Pending")
+                                            {
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-success rounded-circle" title="Approve" 
+                                                            onclick="openReviewModal(@item.Id, '@item.EmployeeName', 'Approved')">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger rounded-circle" title="Reject" 
+                                                            onclick="openReviewModal(@item.Id, '@item.EmployeeName', 'Rejected')">
+                                                        <i class="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted fst-italic">Decided</small>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal fade" id="reviewLeaveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-0 p-3">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" id="reviewModalTitle">Review Leave</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="reviewForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="reviewLeaveId" name="id" />
+                    <input type="hidden" name="returnUrl" value="/Admin/Dashboard" />
+                    <div class="modal-body">
+                        <p id="reviewPrompt" class="text-muted mb-3"></p>
+                        <div class="mb-3">
+                            <label class="form-label fw-600">Admin Note / Remarks (Optional)</label>
+                            <textarea name="adminRemarks" class="form-control" rows="3" placeholder="Add an optional comment for the employee..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="reviewSubmitBtn" class="btn px-4"></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    <script>
+        const openReviewModal = (leaveId, empName, action) => {
+            $('#reviewLeaveId').val(leaveId);
+            const $form = $('#reviewForm');
+            const $submitBtn = $('#reviewSubmitBtn');
+            const $title = $('#reviewModalTitle');
+            const $prompt = $('#reviewPrompt');
+
+            if (action === 'Approved') {
+                $form.attr('action', '/Admin/ApproveLeave');
+                $title.text('Approve Leave Request');
+                $prompt.html(`Are you sure you want to <strong>approve</strong> the leave request for <strong>${empName}</strong>?`);
+                $submitBtn.attr('class', 'btn btn-success px-4').html('<i class="fa-solid fa-check me-1"></i> Approve Leave');
+            } else {
+                $form.attr('action', '/Admin/RejectLeave');
+                $title.text('Reject Leave Request');
+                $prompt.html(`Are you sure you want to <strong class="text-danger">reject</strong> the leave request for <strong>${empName}</strong>?`);
+                $submitBtn.attr('class', 'btn btn-danger px-4').html('<i class="fa-solid fa-xmark me-1"></i> Reject Leave');
+            }
+
+            const modalEl = document.getElementById('reviewLeaveModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        };
+        window.openReviewModal = openReviewModal;
+    </script>
+}

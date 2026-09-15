@@ -1,0 +1,217 @@
+@model EmpLMS.Models.ViewModels.ApplyLeaveViewModel
+@{
+    ViewData["Title"] = "Apply for Leave";
+}
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/Employee/Dashboard">
+                <i class="fa-solid fa-layer-group me-2"></i> ELMS 
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="https://ui-avatars.com/api/?name=@(User.Identity?.Name ?? "Employee")&background=3f37c9&color=fff" alt="Profile" class="rounded-circle me-2" width="35" height="35">
+                            <span class="fw-600">@(User.Identity?.Name ?? "Employee User")</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-card border-0 mt-2">
+                            <li><a class="dropdown-item text-danger" href="/Account/Logout"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar d-none d-lg-block">
+            <h6 class="text-uppercase text-muted fw-bold mb-3 px-3 text-xs">Menu</h6>
+            <a href="/Employee/Dashboard" class="sidebar-link">
+                <i class="fa-solid fa-border-all"></i> Dashboard
+            </a>
+            <a href="/Employee/ApplyLeave" class="sidebar-link active">
+                <i class="fa-solid fa-calendar-plus"></i> Apply Leave
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="mb-4">
+                <h2 class="fw-bold mb-1">Apply for Leave</h2>
+                <p class="text-muted mb-0">Select a leave purpose and submit your request for approval.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="glass-card p-4 p-md-5">
+
+                        <div id="applyLeaveAlert" class="d-none"></div>
+
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger py-2 mb-4">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                <div asp-validation-summary="All" class="d-inline small"></div>
+                            </div>
+                        }
+
+                        <form id="applyLeaveForm" asp-action="ApplyLeave" asp-controller="Employee" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <!-- Purpose Dropdown (Loaded from Database) -->
+                            <div class="mb-4">
+                                <label class="form-label fw-600">Leave Purpose <span class="text-danger">*</span></label>
+                                <select asp-for="LeavePurposeId" asp-items="Model.PurposeList" class="form-select" required>
+                                    <option value="">-- Select Leave Purpose --</option>
+                                </select>
+                                <span asp-validation-for="LeavePurposeId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">From Date <span class="text-danger">*</span></label>
+                                    <input asp-for="FromDate" type="date" class="form-control" id="fromDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" required onchange="onFromDateChanged()">
+                                    <span asp-validation-for="FromDate" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">To Date <span class="text-danger">*</span></label>
+                                    <input asp-for="ToDate" type="date" class="form-control" id="toDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" required onchange="calculateDuration()">
+                                    <span asp-validation-for="ToDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Duration & Balance Preview Card -->
+                            <div class="mb-4 p-3 rounded glass-card d-flex align-items-center justify-content-between" style="background: rgba(67, 97, 238, 0.08);">
+                                <div>
+                                    <span class="text-muted small d-block">Requested Working Days:</span>
+                                    <strong class="text-primary-custom fs-6 fw-bold" id="durationDisplay">1 Working Day(s)</strong>
+                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Saturdays, Sundays & Public Holidays excluded</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="text-muted small d-block">Your Available Balance:</span>
+                                    <strong class="fs-5 text-success" id="availableQuotaDisplay">@Model.AvailableLeaves Days</strong>
+                                </div>
+                            </div>
+                            
+                            <!-- Reason / Remarks Text Area -->
+                            <div class="mb-4">
+                                <label class="form-label fw-600">Reason / Remarks <span class="text-danger">*</span></label>
+                                <textarea asp-for="Remarks" class="form-control" rows="4" placeholder="Please provide your reason or remarks for leave..." required></textarea>
+                                <span asp-validation-for="Remarks" class="text-danger small"></span>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-3 mt-5">
+                                <a href="/Employee/Dashboard" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+                                <button type="submit" id="applyLeaveBtn" class="btn btn-custom px-4 py-2">
+                                    <i class="fa-solid fa-paper-plane me-2"></i> Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+@section Scripts {
+    <script>
+        const availableBalance = @Model.AvailableLeaves;
+        const holidayDates = new Set(@Html.Raw(ViewBag.HolidayDatesJson ?? "[]"));
+
+        const onFromDateChanged = () => {
+            const fromVal = $('#fromDate').val();
+            if (fromVal) {
+                // Prevent To Date from being earlier than From Date
+                $('#toDate').attr('min', fromVal);
+                if ($('#toDate').val() && $('#toDate').val() < fromVal) {
+                    $('#toDate').val(fromVal);
+                }
+            }
+            calculateDuration();
+        };
+        window.onFromDateChanged = onFromDateChanged;
+
+        const calculateDuration = () => {
+            const fromVal = $('#fromDate').val();
+            const toVal = $('#toDate').val();
+            const $display = $('#durationDisplay');
+
+            if (!fromVal || !toVal) return 0;
+
+            const from = new Date(fromVal);
+            const to = new Date(toVal);
+
+            if (!isNaN(from) && !isNaN(to)) {
+                if (to < from) {
+                    $display.text('Invalid: End before Start').attr('class', 'text-danger fs-6 fw-bold');
+                    return 0;
+                }
+
+                let workingDays = 0;
+                let weekendCount = 0;
+                let holidayCount = 0;
+                const cur = new Date(from);
+
+                while (cur <= to) {
+                    const dayOfWeek = cur.getDay(); // 0 is Sunday, 6 is Saturday
+                    const year = cur.getFullYear();
+                    const month = String(cur.getMonth() + 1).padStart(2, '0');
+                    const day = String(cur.getDate()).padStart(2, '0');
+                    const isoDate = `${year}-${month}-${day}`;
+
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        weekendCount++;
+                    } else if (holidayDates.has(isoDate)) {
+                        holidayCount++;
+                    } else {
+                        workingDays++;
+                    }
+                    cur.setDate(cur.getDate() + 1);
+                }
+
+                if (workingDays > 0) {
+                    const excluded = weekendCount + holidayCount;
+                    const info = excluded > 0 ? ` (${excluded} off-day/holiday excluded)` : '';
+                    $display.text(`${workingDays} Working Day(s)${info}`).attr('class', 'text-primary-custom fs-6 fw-bold');
+                    return workingDays;
+                } else {
+                    $display.text('0 Days (Selected dates are weekends/holidays)').attr('class', 'text-warning fs-6 fw-bold');
+                    return 0;
+                }
+            }
+            return 0;
+        };
+        window.calculateDuration = calculateDuration;
+
+        $(document).ready(() => {
+            onFromDateChanged();
+
+            $('#applyLeaveForm').on('submit', (e) => {
+                const days = calculateDuration();
+                const $alert = $('#applyLeaveAlert');
+                $alert.addClass('d-none').empty();
+
+                if (days <= 0) {
+                    e.preventDefault();
+                    $alert.html('<div class="alert alert-danger py-2 mb-4"><i class="fa-solid fa-triangle-exclamation me-1"></i> Selected date range falls entirely on weekends (Saturday/Sunday) or company holidays. Please select at least 1 working day.</div>').removeClass('d-none');
+                    return false;
+                }
+
+                if (days > availableBalance) {
+                    e.preventDefault();
+                    $alert.html(`<div class="alert alert-danger py-2 mb-4"><i class="fa-solid fa-triangle-exclamation me-1"></i> You requested ${days} working day(s), but only have ${availableBalance} day(s) remaining in your quota.</div>`).removeClass('d-none');
+                    return false;
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,130 @@
+@model EmpLMS.Models.ViewModels.EditEmployeeViewModel
+@{
+    ViewData["Title"] = "Edit Employee";
+}
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/Admin/Dashboard">
+                <i class="fa-solid fa-layer-group me-2"></i> ELMS Admin
+            </a>
+            <div class="ms-auto">
+                <a class="btn btn-sm btn-outline-custom" href="/Admin/Employees">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Employees
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar d-none d-lg-block">
+            <h6 class="text-uppercase text-muted fw-bold mb-3 px-3 text-xs">Menu</h6>
+            <a href="/Admin/Dashboard" class="sidebar-link">
+                <i class="fa-solid fa-border-all"></i> Dashboard
+            </a>
+            <a href="/Admin/Employees" class="sidebar-link active">
+                <i class="fa-solid fa-users"></i> Employees
+            </a>
+            <a href="/Admin/Leaves" class="sidebar-link">
+                <i class="fa-solid fa-calendar-check"></i> Leave Requests
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="mb-4">
+                <h2 class="fw-bold mb-1">Edit Employee</h2>
+                <p class="text-muted mb-0">Update profile details, role, department, or reset password.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="glass-card p-4 p-md-5">
+
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger py-2 mb-4">
+                                <div asp-validation-summary="All" class="small"></div>
+                            </div>
+                        }
+
+                        <form id="editEmployeeForm" asp-action="EditEmployee" asp-controller="Admin" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="EmployeeId" />
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">First Name <span class="text-danger">*</span></label>
+                                    <input asp-for="FirstName" class="form-control" required>
+                                    <span asp-validation-for="FirstName" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Last Name <span class="text-danger">*</span></label>
+                                    <input asp-for="LastName" class="form-control" required>
+                                    <span asp-validation-for="LastName" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Email Address <span class="text-danger">*</span></label>
+                                    <input asp-for="Email" type="email" class="form-control" required>
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Contact Number</label>
+                                    <input asp-for="ContactNumber" class="form-control">
+                                    <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Department <span class="text-danger">*</span></label>
+                                    <select asp-for="DepartmentId" asp-items="Model.DepartmentList" class="form-select" required></select>
+                                    <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Designation <span class="text-danger">*</span></label>
+                                    <input asp-for="Designation" class="form-control" required>
+                                    <span asp-validation-for="Designation" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Annual Leave Quota <span class="text-danger">*</span></label>
+                                    <input asp-for="TotalLeaveQuota" type="number" min="1" max="100" class="form-control" required>
+                                    <span asp-validation-for="TotalLeaveQuota" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600">Account Status</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveSwitch">
+                                        <label class="form-check-label fw-600" for="isActiveSwitch">Active Account</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 p-3 rounded glass-card" style="background: rgba(0,0,0,0.02);">
+                                <label class="form-label fw-600 mb-1">Reset Password (Optional)</label>
+                                <small class="text-muted d-block mb-2">Leave blank to keep the employee's existing password unchanged.</small>
+                                <input asp-for="NewPassword" type="password" class="form-control" placeholder="Enter new password to reset">
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-3 mt-4">
+                                <a href="/Admin/Employees" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+                                <button type="submit" id="editEmployeeSubmitBtn" class="btn btn-custom px-4 py-2">
+                                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
